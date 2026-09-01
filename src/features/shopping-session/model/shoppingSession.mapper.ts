@@ -12,6 +12,6 @@ export function mapShoppingSessionDto(
     ...dto,
     id: toShoppingSessionId(dto.id),
     status: dto.status === "ACTIVE" ? "active" : "completed",
-    createdAt: new Date(dto.createdAt),
+    createdAt: dto.createdAt,
   };
 }

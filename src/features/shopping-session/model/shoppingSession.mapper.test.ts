@@ -24,8 +24,7 @@ describe("mapShoppingSessionDto", () => {
     expect(result).toEqual({
       ...baseDto,
       status: uiStatus,
-      createdAt: new Date(baseDto.createdAt),
     });
-    expect(result.createdAt).toBeInstanceOf(Date);
+    expect(result.createdAt).toBe(baseDto.createdAt);
   });
 });

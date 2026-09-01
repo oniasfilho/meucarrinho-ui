@@ -11,7 +11,7 @@ export interface ShoppingSession {
   status: ShoppingSessionStatus;
   itemCount: number;
   total: number;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface CreateShoppingSessionInput {

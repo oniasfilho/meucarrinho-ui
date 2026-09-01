@@ -27,7 +27,7 @@ export function ActiveSessionCard({ session, onOpen }: ActiveSessionCardProps) {
         <span className={styles.name}>{session.name}</span>
         <span className={styles.status}>Ativa</span>
       </span>
-      <time className={styles.date} dateTime={session.createdAt.toISOString()}>
+      <time className={styles.date} dateTime={session.createdAt}>
         {formatSessionDate(session.createdAt)}
       </time>
       <span className={styles.summary}>

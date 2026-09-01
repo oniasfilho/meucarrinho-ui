@@ -60,7 +60,7 @@ All network responses cross the same explicit boundary:
 unknown JSON → Zod validation → DTO → mapper → UI model
 ```
 
-Transport statuses and ISO date strings are converted only by the mapper. Components receive the UI model and do not parse transport data.
+Transport statuses are converted by the mapper. Validated ISO date strings remain unchanged in the UI model so RTK Query keeps fully serializable cache data; they are parsed only by the feature date formatter when displayed. Components receive the UI model and do not parse transport data.
 
 ## State ownership
 
@@ -98,13 +98,64 @@ The current scope covers listing active shopping-session summaries, empty/loadin
 
 The current slice does not manage item records, update quantities, derive totals from item source data, display recent or completed-session history, provide authentication, or offer production persistence. Seeded sessions with non-zero counts show only their summary because the item-list contract belongs to the next slice.
 
-## Next slice
+## Next slice: Shopping session items + quantity update
 
 Planned, but intentionally not implemented here:
 
 ```text
-Add item
-→ update quantity
-→ calculate total from item source data
-→ display the item in the active session
+GET shopping-session detail containing items
+→ render seeded session items
+→ change an item's quantity
+→ perform an RTK Query mutation
+→ optimistically update the cached session detail
+→ request succeeds: keep the optimistic state
+  request fails: roll back the optimistic state
+→ recalculate and display updated totals
 ```
+
+This slice is intended to exercise server-state ownership, RTK Query cache behavior, mutations, optimistic updates and rollback, cache invalidation/update strategy, derived totals, controller orchestration, BFF mutation handling, and integration testing.
+
+Adding new items is deliberately deferred to the following slice. The feature sequence is:
+
+```text
+Current completed slice
+→ Shopping session items + quantity update
+→ Add Item workflow
+```
+
+### List and detail contracts
+
+The current list and detail endpoints can share `ShoppingSessionDto` because they expose the same representation. Once item records enter the detail response, the next slice should introduce representations with genuinely different data needs:
+
+```text
+ShoppingSessionSummaryDto → GET /sessions
+ShoppingSessionDetailDto  → GET /sessions/:sessionId
+
+ShoppingSessionSummary
+ShoppingSessionDetail
+ShoppingSessionItem
+```
+
+The list endpoint should continue returning summaries rather than full item details. This contract and model split belongs to the next slice, not this cleanup.
+
+### Quantity mutation direction
+
+The expected HTTP direction is:
+
+```http
+PATCH /api/bff/sessions/:sessionId/items/:itemId/quantity
+```
+
+The exact payload can be decided with that slice. Its RTK Query endpoint should practice an optimistic cache update through `onQueryStarted` and `api.util.updateQueryData(...)`, retaining the patch when `queryFulfilled` succeeds and undoing it when the request fails:
+
+```ts
+const patchResult = dispatch(api.util.updateQueryData(/* ... */));
+
+try {
+  await queryFulfilled;
+} catch {
+  patchResult.undo();
+}
+```
+
+No quantity mutation or Add Item behavior is part of the current cleanup.
