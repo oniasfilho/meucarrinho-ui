@@ -1,0 +1,29 @@
+.screen {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.createAction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.createError {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.sectionTitle {
+  margin-block: 0 var(--space-4);
+  font-size: 1.25rem;
+}
+
+.sessionList {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

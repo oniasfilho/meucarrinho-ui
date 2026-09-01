@@ -1,0 +1,175 @@
+{
+  "info": {
+    "_postman_id": "7fb1a0d2-1c76-4a6b-a137-b72d27cffab5",
+    "name": "Meu Carrinho — Fake BFF",
+    "description": "Development collection for exercising the shopping-session BFF Route Handlers. Run the requests in collection order while `npm run dev` is running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. List shopping sessions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"returns 200\", () => {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"returns a session array\", () => {",
+              "  pm.expect(pm.response.json()).to.be.an(\"array\");",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/bff/sessions",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "bff", "sessions"]
+        },
+        "description": "Lists sessions in newest-first order."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Create shopping session",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"returns 201\", () => {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "const session = pm.response.json();",
+              "",
+              "pm.test(\"returns the created session defaults\", () => {",
+              "  pm.expect(session.name).to.equal(\"Compras de teste\");",
+              "  pm.expect(session.status).to.equal(\"ACTIVE\");",
+              "  pm.expect(session.itemCount).to.equal(0);",
+              "  pm.expect(session.total).to.equal(0);",
+              "  pm.expect(session.id).to.be.a(\"string\").and.not.empty;",
+              "  pm.expect(session.createdAt).to.be.a(\"string\").and.not.empty;",
+              "});",
+              "",
+              "pm.collectionVariables.set(\"sessionId\", session.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Compras de teste\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/bff/sessions",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "bff", "sessions"]
+        },
+        "description": "Creates a session and saves the returned ID into the collection-level `sessionId` variable."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Get created shopping session",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"returns 200\", () => {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"returns the session created earlier\", () => {",
+              "  pm.expect(pm.response.json().id).to.equal(pm.collectionVariables.get(\"sessionId\"));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/bff/sessions/{{sessionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "bff", "sessions", "{{sessionId}}"]
+        },
+        "description": "Fetches the session created by the preceding request."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Get unknown shopping session",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"returns 404\", () => {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"returns SESSION_NOT_FOUND\", () => {",
+              "  pm.expect(pm.response.json()).to.deep.equal({ code: \"SESSION_NOT_FOUND\" });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/bff/sessions/00000000-0000-4000-8000-000000000000",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "api",
+            "bff",
+            "sessions",
+            "00000000-0000-4000-8000-000000000000"
+          ]
+        },
+        "description": "Verifies the not-found response for an unknown session ID."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:3000",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

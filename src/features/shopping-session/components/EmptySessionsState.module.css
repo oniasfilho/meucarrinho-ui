@@ -1,0 +1,23 @@
+.emptyState {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-6);
+  border: 1px dashed var(--color-line);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  text-align: center;
+}
+
+.title,
+.description {
+  margin: 0;
+}
+
+.title {
+  font-size: 1.25rem;
+}
+
+.description {
+  color: var(--color-muted);
+  line-height: 1.5;
+}
