@@ -13,8 +13,8 @@ export function formatCurrency(value: number): string {
   return currencyFormatter.format(value);
 }
 
-export function formatSessionDate(value: Date): string {
-  return sessionDateFormatter.format(value);
+export function formatSessionDate(value: string): string {
+  return sessionDateFormatter.format(new Date(value));
 }
 
 export function formatItemCount(value: number): string {
@@ -22,5 +22,5 @@ export function formatItemCount(value: number): string {
 }
 
 export function createDefaultSessionName(now: Date): string {
-  return `Compra ${formatSessionDate(now)}`;
+  return `Compra ${formatSessionDate(now.toISOString())}`;
 }

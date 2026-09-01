@@ -16,7 +16,7 @@ describe("shopping session formatters", () => {
   });
 
   it("formats session dates in Brazilian format", () => {
-    expect(formatSessionDate(new Date(2026, 7, 31, 12))).toBe("31/08/2026");
+    expect(formatSessionDate("2026-08-31T12:00:00.000Z")).toBe("31/08/2026");
   });
 
   it.each([

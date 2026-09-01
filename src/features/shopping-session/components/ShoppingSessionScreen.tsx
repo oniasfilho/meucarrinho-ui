@@ -68,10 +68,7 @@ export function ShoppingSessionScreen({
             {session.status === "active" ? "Ativa" : "Concluída"}
           </span>
         </div>
-        <time
-          className={styles.date}
-          dateTime={session.createdAt.toISOString()}
-        >
+        <time className={styles.date} dateTime={session.createdAt}>
           {formatSessionDate(session.createdAt)}
         </time>
       </header>
