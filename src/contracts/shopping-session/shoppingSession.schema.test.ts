@@ -1,4 +1,7 @@
-import { ShoppingSessionDtoSchema } from "./shoppingSession.schema";
+import {
+  CreateShoppingSessionRequestDtoSchema,
+  ShoppingSessionDtoSchema,
+} from "./shoppingSession.schema";
 
 const validDto = {
   id: "550e8400-e29b-41d4-a716-446655440000",
@@ -22,5 +25,26 @@ describe("ShoppingSessionDtoSchema", () => {
     ["extra key", { ...validDto, unexpected: true }],
   ])("rejects a DTO with %s", (_case, dto) => {
     expect(ShoppingSessionDtoSchema.safeParse(dto).success).toBe(false);
+  });
+});
+
+describe("CreateShoppingSessionRequestDtoSchema", () => {
+  it.each([
+    ["empty name", { name: "" }],
+    ["whitespace-only name", { name: "   " }],
+    ["name longer than 120 characters", { name: "a".repeat(121) }],
+    ["extra key", { name: "Compra semanal", unexpected: true }],
+  ])("rejects a request with %s", (_case, request) => {
+    expect(
+      CreateShoppingSessionRequestDtoSchema.safeParse(request).success,
+    ).toBe(false);
+  });
+
+  it("trims a valid name at the request boundary", () => {
+    expect(
+      CreateShoppingSessionRequestDtoSchema.parse({
+        name: "  Compra semanal  ",
+      }),
+    ).toEqual({ name: "Compra semanal" });
   });
 });
