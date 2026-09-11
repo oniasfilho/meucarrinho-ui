@@ -11,7 +11,7 @@ import {
   formatItemCount,
   formatSessionDate,
 } from "../model/shoppingSession.formatters";
-import { toShoppingSessionId } from "../model/shoppingSession.types";
+import { toShoppingSessionId } from "../model/shoppingSessionSummary.types";
 
 import styles from "./ShoppingSessionScreen.module.css";
 

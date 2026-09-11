@@ -1,14 +1,14 @@
 import { http, HttpResponse } from "msw";
 
-import type { ShoppingSessionDto } from "@/contracts/shopping-session/shoppingSession.dto";
+import type { ShoppingSessionDetailDto } from "@/contracts/shopping-session/shoppingSessionDetail.dto";
 import { ShoppingSessionScreen } from "@/features/shopping-session";
-import { activeSessionDto } from "@/test/mocks/handlers";
+import { activeSessionDetailDto as activeSessionDto } from "@/test/mocks/handlers";
 import { server } from "@/test/mocks/server";
 import { render, screen } from "@/test/render";
 
 const detailUrl = `http://localhost/api/bff/sessions/${activeSessionDto.id}`;
 
-function useDetailResponse(dto: ShoppingSessionDto) {
+function useDetailResponse(dto: ShoppingSessionDetailDto) {
   server.use(http.get(detailUrl, () => HttpResponse.json(dto)));
 }
 

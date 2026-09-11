@@ -2,7 +2,10 @@ import { http, HttpResponse, delay } from "msw";
 import userEvent from "@testing-library/user-event";
 
 import { SessionsHomeScreen } from "@/features/shopping-session";
-import { activeSessionDto, createdSessionDto } from "@/test/mocks/handlers";
+import {
+  activeSessionSummaryDto as activeSessionDto,
+  createdSessionDetailDto as createdSessionDto,
+} from "@/test/mocks/handlers";
 import { server } from "@/test/mocks/server";
 import { fireEvent, render, screen, waitFor } from "@/test/render";
 

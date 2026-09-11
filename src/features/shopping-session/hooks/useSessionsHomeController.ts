@@ -9,12 +9,12 @@ import {
 } from "../api/shoppingSession.api";
 import { createDefaultSessionName } from "../model/shoppingSession.formatters";
 import type {
-  ShoppingSession,
   ShoppingSessionId,
-} from "../model/shoppingSession.types";
+  ShoppingSessionSummary,
+} from "../model/shoppingSessionSummary.types";
 
 interface SessionsHomeController {
-  activeSessions: ShoppingSession[];
+  activeSessions: ShoppingSessionSummary[];
   isLoading: boolean;
   isCreating: boolean;
   loadErrorMessage?: string;

@@ -4,14 +4,14 @@ import {
   formatSessionDate,
 } from "../model/shoppingSession.formatters";
 import type {
-  ShoppingSession,
   ShoppingSessionId,
-} from "../model/shoppingSession.types";
+  ShoppingSessionSummary,
+} from "../model/shoppingSessionSummary.types";
 
 import styles from "./ActiveSessionCard.module.css";
 
 interface ActiveSessionCardProps {
-  session: ShoppingSession;
+  session: ShoppingSessionSummary;
   onOpen(sessionId: ShoppingSessionId): void;
 }
 

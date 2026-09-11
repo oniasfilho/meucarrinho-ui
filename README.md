@@ -1,11 +1,12 @@
 # MeuCarrinho UI
 
-MeuCarrinho UI is a Next.js application for creating and following shopping sessions. The current slice provides a small, tested journey for listing active sessions, creating a session, opening its summary, and retrieving that same session after a browser reload through a development-only fake BFF.
+MeuCarrinho UI is a Next.js application for creating and following shopping sessions. It provides a small, tested journey for listing active sessions, creating a session, opening its summary, and retrieving that same session after a browser reload. The Next.js BFF forwards every request to the `meucarrinho-api` Spring Boot backend, which owns persistence in PostgreSQL — the browser never calls Spring directly.
 
 ## Requirements
 
 - Node.js 24.20.0
 - npm 11.19.0
+- A running `meucarrinho-api` instance (see its README) with PostgreSQL and LocalStack up via `docker compose up -d` and `./mvnw spring-boot:run`
 
 ## Start locally
 
@@ -17,6 +18,8 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+`.env.local` must point `MEUCARRINHO_API_URL` at the local Spring API, typically `http://localhost:8080/api/v1`. This value is server-only and must never be exposed with a `NEXT_PUBLIC_` prefix.
 
 ## Commands
 
@@ -44,13 +47,13 @@ app → feature → shared/contracts
 
 `app` composes routes and providers. A feature owns its screens, controllers, API endpoints, and UI model. Reusable infrastructure and UI primitives live in `shared`, while transport contracts live in `contracts`.
 
-The server-side fake follows a separate dependency direction:
+The server side follows a separate dependency direction:
 
 ```text
-Route Handler → BFF → fake repository
+Route Handler → BFF → HTTP client → Spring API
 ```
 
-Route Handlers own HTTP concerns, the BFF owns application scenarios and artificial delay, and the repository owns the process-lifetime data store.
+Route Handlers own HTTP concerns and translate `ApiError`/`ProblemDetail` failures into a frontend-safe `{ code, message }` shape. The BFF module (`src/server/shopping-session/shoppingSession.bff.ts`) owns the mapping to Spring endpoints. `src/server/http/apiClient.ts` owns the actual `fetch` call against `MEUCARRINHO_API_URL`, and `src/server/http/apiError.ts` owns parsing Spring's `ProblemDetail` error bodies.
 
 ## Data boundary
 
@@ -76,35 +79,24 @@ Data-fetching hooks keep their conventional names. In particular, generated RTK 
 
 A UI primitive becomes shared only when reuse, accessibility, or consistent behavior justifies the shared dependency. Feature-specific presentation remains inside its feature.
 
-## Fake BFF scenarios
+## Known backend issue: `createdAt` on session creation
 
-The local fake BFF reads these server-side environment variables:
+`POST /sessions` (and `/duplicate`) on `meucarrinho-api` currently returns `createdAt: null` for the new session, because `ShoppingSessionService.create()`/`.duplicate()` build the response from the in-memory entity instead of the one returned by `sessionRepository.save(...)` (a manually-assigned `@Id` with no `@Version`/`Persistable` makes Spring Data JPA merge rather than persist, so the `@PrePersist`-set timestamp never reaches the response). A follow-up `GET` always returns the real value.
 
-| Variable                   | Supported values            | Behavior                                                                                      |
-| -------------------------- | --------------------------- | --------------------------------------------------------------------------------------------- |
-| `FAKE_BFF_DELAY_MS`        | A non-negative number       | Adds that many milliseconds of delay. Missing, negative, or non-numeric values mean no delay. |
-| `FAKE_BFF_LIST_SCENARIO`   | `success`, `empty`, `error` | Returns repository sessions, an empty list, or a `BFF_UNAVAILABLE` response.                  |
-| `FAKE_BFF_CREATE_SCENARIO` | `success`, `error`          | Creates a session or returns a `BFF_UNAVAILABLE` response.                                    |
-
-Copy `.env.example` to `.env.local` before local development. Restart `npm run dev` after changing a scenario because the server process reads these values at runtime.
-
-## Fake persistence limitation
-
-The fake repository stores sessions in one process-lifetime `globalThis` map. Created sessions survive route changes and browser reloads, but restarting the development server clears them. This is not durable persistence and is unsuitable for multi-instance deployment.
+`getSessions`/`getSession` on the frontend keep the DTO schema strict (no null `createdAt`), but `createSession`'s `transformResponse` in `src/features/shopping-session/api/shoppingSession.api.ts` uses a schema that tolerates a null `createdAt` and falls back to the client's current time for display. Remove that override once the backend fix lands.
 
 ## Current scope and non-goals
 
-The current scope covers listing active shopping-session summaries, empty/loading/error states, creating a named session, navigating to its detail route, retrieving it after reload, and displaying its status, date, item count, and total.
+The current scope covers listing shopping sessions (filtered to active on the home screen), empty/loading/error states, creating a named session against the real backend, navigating to its detail route, retrieving it after reload or server restart, and displaying its status, date, item count, and total.
 
-The current slice does not manage item records, update quantities, derive totals from item source data, display recent or completed-session history, provide authentication, or offer production persistence. Seeded sessions with non-zero counts show only their summary because the item-list contract belongs to the next slice.
+The current slice does not render item records, update quantities, derive totals client-side, display recent or completed-session history, upload label photos, provide authentication, or expose store name/budget in the UI yet. The transport and UI-model contracts (`ShoppingSessionSummary`/`ShoppingSessionDetail`/`ShoppingSessionItem`) already carry that data from the backend; only the screens that render it are still pending.
 
 ## Next slice: Shopping session items + quantity update
 
 Planned, but intentionally not implemented here:
 
 ```text
-GET shopping-session detail containing items
-→ render seeded session items
+render session detail items (ShoppingSessionDetail.items)
 → change an item's quantity
 → perform an RTK Query mutation
 → optimistically update the cached session detail
@@ -122,21 +114,6 @@ Current completed slice
 → Shopping session items + quantity update
 → Add Item workflow
 ```
-
-### List and detail contracts
-
-The current list and detail endpoints can share `ShoppingSessionDto` because they expose the same representation. Once item records enter the detail response, the next slice should introduce representations with genuinely different data needs:
-
-```text
-ShoppingSessionSummaryDto → GET /sessions
-ShoppingSessionDetailDto  → GET /sessions/:sessionId
-
-ShoppingSessionSummary
-ShoppingSessionDetail
-ShoppingSessionItem
-```
-
-The list endpoint should continue returning summaries rather than full item details. This contract and model split belongs to the next slice, not this cleanup.
 
 ### Quantity mutation direction
 

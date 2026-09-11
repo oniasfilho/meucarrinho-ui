@@ -3,13 +3,11 @@
 import { hasHttpStatus } from "@/shared/api/errors";
 
 import { useGetSessionQuery } from "../api/shoppingSession.api";
-import type {
-  ShoppingSession,
-  ShoppingSessionId,
-} from "../model/shoppingSession.types";
+import type { ShoppingSessionDetail } from "../model/shoppingSessionDetail.types";
+import type { ShoppingSessionId } from "../model/shoppingSessionSummary.types";
 
 interface ShoppingSessionController {
-  session?: ShoppingSession;
+  session?: ShoppingSessionDetail;
   isLoading: boolean;
   isNotFound: boolean;
   errorMessage?: string;

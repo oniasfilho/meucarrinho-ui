@@ -1,7 +1,7 @@
-import { CreateShoppingSessionRequestDtoSchema } from "@/contracts/shopping-session/shoppingSession.schema";
+import { CreateShoppingSessionRequestDtoSchema } from "@/contracts/shopping-session/shoppingSession.requests";
+import { apiErrorToBffResponse } from "@/server/http/bffResponse";
 import {
   createShoppingSession,
-  FakeBffUnavailableError,
   listShoppingSessions,
 } from "@/server/shopping-session/shoppingSession.bff";
 
@@ -11,21 +11,13 @@ function invalidRequestResponse(): Response {
   return Response.json({ code: "INVALID_REQUEST" }, { status: 400 });
 }
 
-function unavailableResponse(): Response {
-  return Response.json({ code: "BFF_UNAVAILABLE" }, { status: 503 });
-}
-
 export async function GET(): Promise<Response> {
   try {
     const sessions = await listShoppingSessions();
 
     return Response.json(sessions, { status: 200 });
   } catch (error) {
-    if (error instanceof FakeBffUnavailableError) {
-      return unavailableResponse();
-    }
-
-    throw error;
+    return apiErrorToBffResponse(error);
   }
 }
 
@@ -49,10 +41,6 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json(session, { status: 201 });
   } catch (error) {
-    if (error instanceof FakeBffUnavailableError) {
-      return unavailableResponse();
-    }
-
-    throw error;
+    return apiErrorToBffResponse(error);
   }
 }
