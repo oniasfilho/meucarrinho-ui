@@ -8,7 +8,10 @@ import {
   mapShoppingSessionDetailDto,
   mapShoppingSessionSummaryDto,
 } from "../model/shoppingSession.mapper";
-import type { CreateShoppingSessionInput } from "../model/shoppingSession.types";
+import type {
+  CreateShoppingSessionInput,
+  UpdateItemQuantityInput,
+} from "../model/shoppingSession.types";
 import type { ShoppingSessionDetail } from "../model/shoppingSessionDetail.types";
 import type {
   ShoppingSessionId,
@@ -73,6 +76,68 @@ const shoppingSessionApi = baseApi.injectEndpoints({
       },
       invalidatesTags: [{ type: "ShoppingSession", id: "LIST" }],
     }),
+    updateItemQuantity: builder.mutation<
+      ShoppingSessionDetail,
+      UpdateItemQuantityInput
+    >({
+      query: ({ sessionId, itemId, quantity }) => ({
+        url: `/sessions/${sessionId}/items/${itemId}/quantity`,
+        method: "PATCH",
+        body: { quantity },
+      }),
+      transformResponse: (response: unknown) => {
+        const dto = ShoppingSessionDetailDtoSchema.parse(response);
+
+        return mapShoppingSessionDetailDto(dto);
+      },
+      async onQueryStarted(
+        { sessionId, itemId, quantity },
+        { dispatch, queryFulfilled },
+      ) {
+        const patchResult = dispatch(
+          shoppingSessionApi.util.updateQueryData(
+            "getSession",
+            sessionId,
+            (draft) => {
+              const item = draft.items.find((entry) => entry.id === itemId);
+
+              if (!item) {
+                return;
+              }
+
+              item.quantity = quantity;
+              draft.itemCount = draft.items.reduce(
+                (sum, entry) => sum + entry.quantity,
+                0,
+              );
+              draft.total = draft.items.reduce(
+                (sum, entry) => sum + entry.unitPrice * entry.quantity,
+                0,
+              );
+              draft.remainingBudget =
+                draft.budget === null ? null : draft.budget - draft.total;
+              draft.overBudget =
+                draft.budget !== null && draft.total > draft.budget;
+            },
+          ),
+        );
+
+        try {
+          const { data } = await queryFulfilled;
+
+          dispatch(
+            shoppingSessionApi.util.updateQueryData(
+              "getSession",
+              sessionId,
+              () => data,
+            ),
+          );
+        } catch {
+          patchResult.undo();
+        }
+      },
+      invalidatesTags: [{ type: "ShoppingSession", id: "LIST" }],
+    }),
   }),
 });
 
@@ -80,4 +145,5 @@ export const {
   useGetSessionsQuery,
   useGetSessionQuery,
   useCreateSessionMutation,
+  useUpdateItemQuantityMutation,
 } = shoppingSessionApi;

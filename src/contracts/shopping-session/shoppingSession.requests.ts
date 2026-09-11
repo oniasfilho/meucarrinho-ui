@@ -37,3 +37,9 @@ export interface UpdateShoppingSessionItemRequestDto {
 export interface UpdateItemQuantityRequestDto {
   quantity: number;
 }
+
+export const UpdateItemQuantityRequestDtoSchema = z
+  .object({
+    quantity: z.number().int().min(1),
+  })
+  .strict() satisfies z.ZodType<UpdateItemQuantityRequestDto>;

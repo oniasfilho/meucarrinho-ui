@@ -21,8 +21,15 @@ interface ShoppingSessionScreenProps {
 export function ShoppingSessionScreen({
   sessionId,
 }: ShoppingSessionScreenProps) {
-  const { errorMessage, isLoading, isNotFound, retry, session } =
-    useShoppingSessionController(toShoppingSessionId(sessionId));
+  const {
+    changeItemQuantity,
+    errorMessage,
+    isLoading,
+    isNotFound,
+    quantityErrorMessage,
+    retry,
+    session,
+  } = useShoppingSessionController(toShoppingSessionId(sessionId));
 
   if (isLoading) {
     return (
@@ -75,10 +82,19 @@ export function ShoppingSessionScreen({
         overBudget={session.overBudget}
       />
 
+      {quantityErrorMessage ? (
+        <p className={styles.quantityError} role="alert">
+          {quantityErrorMessage}
+        </p>
+      ) : null}
+
       {session.items.length === 0 ? (
         <EmptyItemsState />
       ) : (
-        <ShoppingItemList items={session.items} />
+        <ShoppingItemList
+          items={session.items}
+          onQuantityChange={changeItemQuantity}
+        />
       )}
     </main>
   );

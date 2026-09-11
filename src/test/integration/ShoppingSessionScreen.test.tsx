@@ -1,6 +1,8 @@
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, delay } from "msw";
+import userEvent from "@testing-library/user-event";
 
 import type { ShoppingSessionDetailDto } from "@/contracts/shopping-session/shoppingSessionDetail.dto";
+import type { ShoppingSessionItemDto } from "@/contracts/shopping-session/shoppingSessionItem.dto";
 import { ShoppingSessionScreen } from "@/features/shopping-session";
 import { activeSessionDetailDto as activeSessionDto } from "@/test/mocks/handlers";
 import { server } from "@/test/mocks/server";
@@ -8,8 +10,38 @@ import { render, screen } from "@/test/render";
 
 const detailUrl = `http://localhost/api/bff/sessions/${activeSessionDto.id}`;
 
+function quantityUrl(itemId: string): string {
+  return `http://localhost/api/bff/sessions/${activeSessionDto.id}/items/${itemId}/quantity`;
+}
+
 function useDetailResponse(dto: ShoppingSessionDetailDto) {
   server.use(http.get(detailUrl, () => HttpResponse.json(dto)));
+}
+
+const riceItemDto: ShoppingSessionItemDto = {
+  id: "6c8b1e3a-2c2b-4c2e-9c2e-2c2b4c2e9c2e",
+  name: "Arroz",
+  unitPrice: 25.9,
+  quantity: 2,
+  note: null,
+  labelPhotoKey: null,
+  labelPhotoUrl: null,
+  createdAt: "2026-08-31T12:00:00.000Z",
+  updatedAt: "2026-08-31T12:00:00.000Z",
+};
+
+function detailWithRiceItem(
+  item: ShoppingSessionItemDto = riceItemDto,
+): ShoppingSessionDetailDto {
+  return {
+    ...activeSessionDto,
+    budget: 200,
+    itemCount: item.quantity,
+    total: item.unitPrice * item.quantity,
+    remainingBudget: 200 - item.unitPrice * item.quantity,
+    overBudget: false,
+    items: [item],
+  };
 }
 
 describe("ShoppingSessionScreen", () => {
@@ -80,6 +112,71 @@ describe("ShoppingSessionScreen", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Arroz")).toBeInTheDocument();
     expect(screen.getByText("marca preferida")).toBeInTheDocument();
+    expect(screen.getByText(/2 × R\$\s25,90/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s148,20 de R\$\s200,00/)).toBeInTheDocument();
+  });
+
+  it("disables the decrement button at quantity 1", async () => {
+    useDetailResponse(detailWithRiceItem({ ...riceItemDto, quantity: 1 }));
+
+    render(<ShoppingSessionScreen sessionId={activeSessionDto.id} />);
+
+    expect(
+      await screen.findByRole("button", {
+        name: "Diminuir quantidade de Arroz",
+      }),
+    ).toBeDisabled();
+  });
+
+  it("optimistically updates quantity and totals, then keeps the server state", async () => {
+    useDetailResponse(detailWithRiceItem());
+    server.use(
+      http.patch(quantityUrl(riceItemDto.id), async () => {
+        await delay(50);
+
+        return HttpResponse.json(
+          detailWithRiceItem({ ...riceItemDto, quantity: 3 }),
+        );
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<ShoppingSessionScreen sessionId={activeSessionDto.id} />);
+
+    await screen.findByText(/2 × R\$\s25,90/);
+
+    await user.click(
+      screen.getByRole("button", { name: "Aumentar quantidade de Arroz" }),
+    );
+
+    expect(await screen.findByText(/3 × R\$\s25,90/)).toBeInTheDocument();
+
+    await screen.findByText(/R\$\s122,30 de R\$\s200,00/);
+    expect(screen.getByText(/3 × R\$\s25,90/)).toBeInTheDocument();
+  });
+
+  it("rolls back the optimistic quantity update and shows an error on failure", async () => {
+    useDetailResponse(detailWithRiceItem());
+    server.use(
+      http.patch(quantityUrl(riceItemDto.id), () =>
+        HttpResponse.json(null, { status: 500 }),
+      ),
+    );
+
+    const user = userEvent.setup();
+    render(<ShoppingSessionScreen sessionId={activeSessionDto.id} />);
+
+    await screen.findByText(/2 × R\$\s25,90/);
+
+    await user.click(
+      screen.getByRole("button", { name: "Aumentar quantidade de Arroz" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Não foi possível atualizar a quantidade. Tente novamente.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText(/2 × R\$\s25,90/)).toBeInTheDocument();
     expect(screen.getByText(/R\$\s148,20 de R\$\s200,00/)).toBeInTheDocument();
   });

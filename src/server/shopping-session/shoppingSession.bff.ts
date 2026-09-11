@@ -1,6 +1,9 @@
 import "server-only";
 
-import type { CreateShoppingSessionRequestDto } from "@/contracts/shopping-session/shoppingSession.requests";
+import type {
+  CreateShoppingSessionRequestDto,
+  UpdateItemQuantityRequestDto,
+} from "@/contracts/shopping-session/shoppingSession.requests";
 import type { ShoppingSessionDetailDto } from "@/contracts/shopping-session/shoppingSessionDetail.dto";
 import type { ShoppingSessionSummaryDto } from "@/contracts/shopping-session/shoppingSessionSummary.dto";
 import { apiFetch } from "@/server/http/apiClient";
@@ -22,4 +25,18 @@ export function getShoppingSession(
   sessionId: string,
 ): Promise<ShoppingSessionDetailDto> {
   return apiFetch<ShoppingSessionDetailDto>(`/sessions/${sessionId}`);
+}
+
+export function updateShoppingSessionItemQuantity(
+  sessionId: string,
+  itemId: string,
+  input: UpdateItemQuantityRequestDto,
+): Promise<ShoppingSessionDetailDto> {
+  return apiFetch<ShoppingSessionDetailDto>(
+    `/sessions/${sessionId}/items/${itemId}/quantity`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
 }
