@@ -33,6 +33,15 @@ describe("ShoppingSessionSummaryDtoSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts a non-RFC-4122 UUID-shaped id, as used by seed data", () => {
+    expect(
+      ShoppingSessionSummaryDtoSchema.safeParse({
+        ...validDto,
+        id: "10000000-0000-0000-0000-000000000002",
+      }).success,
+    ).toBe(true);
+  });
+
   it.each([
     ["bad status", { ...validDto, status: "PENDING" }],
     ["invalid date", { ...validDto, createdAt: "31/08/2026" }],

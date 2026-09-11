@@ -4,7 +4,10 @@ import type { ShoppingSessionSummaryDto } from "./shoppingSessionSummary.dto";
 
 export const ShoppingSessionSummaryDtoSchema = z
   .object({
-    id: z.uuid(),
+    // Postgres's uuid column accepts any UUID-shaped value, and this backend's
+    // seed data uses non-RFC-4122 placeholder ids (e.g. "10000000-0000-...").
+    // z.guid() checks shape only, without requiring a valid version/variant nibble.
+    id: z.guid(),
     name: z.string().min(1),
     storeName: z.string().nullable(),
     budget: z.number().nullable(),

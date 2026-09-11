@@ -6,12 +6,11 @@ import { ErrorMessage } from "@/shared/components/ErrorMessage/ErrorMessage";
 import { LoadingIndicator } from "@/shared/components/LoadingIndicator/LoadingIndicator";
 
 import { useShoppingSessionController } from "../hooks/useShoppingSessionController";
-import {
-  formatCurrency,
-  formatItemCount,
-  formatSessionDate,
-} from "../model/shoppingSession.formatters";
 import { toShoppingSessionId } from "../model/shoppingSessionSummary.types";
+import { EmptyItemsState } from "./EmptyItemsState";
+import { SessionHeader } from "./SessionHeader";
+import { SessionSummary } from "./SessionSummary";
+import { ShoppingItemList } from "./ShoppingItemList";
 
 import styles from "./ShoppingSessionScreen.module.css";
 
@@ -61,35 +60,26 @@ export function ShoppingSessionScreen({
         Voltar para o início
       </Link>
 
-      <header className={styles.header}>
-        <div className={styles.heading}>
-          <h1 className={styles.title}>{session.name}</h1>
-          <span className={styles.status}>
-            {session.status === "active" ? "Ativa" : "Concluída"}
-          </span>
-        </div>
-        <time className={styles.date} dateTime={session.createdAt}>
-          {formatSessionDate(session.createdAt)}
-        </time>
-      </header>
+      <SessionHeader
+        name={session.name}
+        storeName={session.storeName}
+        status={session.status}
+        createdAt={session.createdAt}
+      />
 
-      <dl className={styles.summary} aria-label="Resumo da sessão">
-        <div className={styles.summaryItem}>
-          <dt>Itens</dt>
-          <dd>{formatItemCount(session.itemCount)}</dd>
-        </div>
-        <div className={styles.summaryItem}>
-          <dt>Total</dt>
-          <dd>{formatCurrency(session.total)}</dd>
-        </div>
-      </dl>
+      <SessionSummary
+        itemCount={session.itemCount}
+        total={session.total}
+        budget={session.budget}
+        remainingBudget={session.remainingBudget}
+        overBudget={session.overBudget}
+      />
 
-      {session.itemCount === 0 ? (
-        <section className={styles.emptyItems}>
-          <h2 className={styles.sectionTitle}>Itens da sessão</h2>
-          <p>Sua sessão ainda não tem itens.</p>
-        </section>
-      ) : null}
+      {session.items.length === 0 ? (
+        <EmptyItemsState />
+      ) : (
+        <ShoppingItemList items={session.items} />
+      )}
     </main>
   );
 }

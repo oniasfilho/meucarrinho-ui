@@ -5,7 +5,8 @@ import type { ShoppingSessionItemDto } from "./shoppingSessionItem.dto";
 export const ShoppingSessionItemDtoSchema: z.ZodType<ShoppingSessionItemDto> =
   z
     .object({
-      id: z.uuid(),
+      // See shoppingSessionSummary.schema.ts: seed data uses non-RFC-4122 ids.
+      id: z.guid(),
       name: z.string().min(1),
       unitPrice: z.number().nonnegative(),
       quantity: z.number().int().positive(),

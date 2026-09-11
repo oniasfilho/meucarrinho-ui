@@ -48,6 +48,42 @@ describe("ShoppingSessionScreen", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders items, notes, and budget progress from a detail with items", async () => {
+    useDetailResponse({
+      ...activeSessionDto,
+      storeName: "Mercado Central",
+      budget: 200,
+      itemCount: 5,
+      total: 51.8,
+      remainingBudget: 148.2,
+      overBudget: false,
+      items: [
+        {
+          id: "6c8b1e3a-2c2b-4c2e-9c2e-2c2b4c2e9c2e",
+          name: "Arroz",
+          unitPrice: 25.9,
+          quantity: 2,
+          note: "marca preferida",
+          labelPhotoKey: null,
+          labelPhotoUrl: null,
+          createdAt: "2026-08-31T12:00:00.000Z",
+          updatedAt: "2026-08-31T12:00:00.000Z",
+        },
+      ],
+    });
+
+    render(<ShoppingSessionScreen sessionId={activeSessionDto.id} />);
+
+    expect(await screen.findByText("Mercado Central")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Itens da sessão" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Arroz")).toBeInTheDocument();
+    expect(screen.getByText("marca preferida")).toBeInTheDocument();
+    expect(screen.getByText(/2 × R\$\s25,90/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s148,20 de R\$\s200,00/)).toBeInTheDocument();
+  });
+
   it("renders the not-found state for a 404", async () => {
     server.use(
       http.get(detailUrl, () =>

@@ -19,6 +19,15 @@ describe("ShoppingSessionItemDtoSchema", () => {
     );
   });
 
+  it("accepts a non-RFC-4122 UUID-shaped id, as used by seed data", () => {
+    expect(
+      ShoppingSessionItemDtoSchema.safeParse({
+        ...validDto,
+        id: "20000000-0000-0000-0000-000000000004",
+      }).success,
+    ).toBe(true);
+  });
+
   it.each([
     ["zero quantity", { ...validDto, quantity: 0 }],
     ["negative unit price", { ...validDto, unitPrice: -1 }],

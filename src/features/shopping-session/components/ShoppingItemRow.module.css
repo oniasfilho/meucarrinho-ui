@@ -1,0 +1,35 @@
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-4);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+}
+
+.main {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.name {
+  font-weight: 600;
+}
+
+.quantity {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.subtotal {
+  justify-self: end;
+}
