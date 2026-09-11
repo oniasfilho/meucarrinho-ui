@@ -14,6 +14,8 @@ function quantityUrl(itemId: string): string {
   return `http://localhost/api/bff/sessions/${activeSessionDto.id}/items/${itemId}/quantity`;
 }
 
+const itemsUrl = `http://localhost/api/bff/sessions/${activeSessionDto.id}/items`;
+
 function useDetailResponse(dto: ShoppingSessionDetailDto) {
   server.use(http.get(detailUrl, () => HttpResponse.json(dto)));
 }
@@ -179,6 +181,90 @@ describe("ShoppingSessionScreen", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/2 × R\$\s25,90/)).toBeInTheDocument();
     expect(screen.getByText(/R\$\s148,20 de R\$\s200,00/)).toBeInTheDocument();
+  });
+
+  it("adds an item, closes the form on Salvar, and updates the cache", async () => {
+    useDetailResponse({ ...activeSessionDto, itemCount: 0, total: 0, items: [] });
+    server.use(
+      http.post(itemsUrl, () => HttpResponse.json(detailWithRiceItem(), { status: 201 })),
+    );
+
+    const user = userEvent.setup();
+    render(<ShoppingSessionScreen sessionId={activeSessionDto.id} />);
+
+    await user.click(await screen.findByRole("button", { name: "Adicionar item" }));
+
+    await user.type(screen.getByLabelText("Nome"), "Arroz");
+    await user.type(screen.getByLabelText("Preço unitário"), "25.9");
+    await user.clear(screen.getByLabelText("Quantidade"));
+    await user.type(screen.getByLabelText("Quantidade"), "2");
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(await screen.findByText("Arroz")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("form", { name: "Adicionar item" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Adicionar item" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the form open and resets fields after Salvar e adicionar outro", async () => {
+    useDetailResponse({ ...activeSessionDto, itemCount: 0, total: 0, items: [] });
+    server.use(
+      http.post(itemsUrl, () => HttpResponse.json(detailWithRiceItem(), { status: 201 })),
+    );
+
+    const user = userEvent.setup();
+    render(<ShoppingSessionScreen sessionId={activeSessionDto.id} />);
+
+    await user.click(await screen.findByRole("button", { name: "Adicionar item" }));
+
+    await user.type(screen.getByLabelText("Nome"), "Arroz");
+    await user.type(screen.getByLabelText("Preço unitário"), "25.9");
+    await user.click(
+      screen.getByRole("button", { name: "Salvar e adicionar outro" }),
+    );
+
+    expect(await screen.findByText("Arroz")).toBeInTheDocument();
+    expect(screen.getByLabelText("Nome")).toHaveValue("");
+    expect(screen.getByRole("form", { name: "Adicionar item" })).toBeInTheDocument();
+  });
+
+  it("keeps the form open and shows an error when adding an item fails", async () => {
+    useDetailResponse({ ...activeSessionDto, itemCount: 0, total: 0, items: [] });
+    server.use(
+      http.post(itemsUrl, () => HttpResponse.json(null, { status: 500 })),
+    );
+
+    const user = userEvent.setup();
+    render(<ShoppingSessionScreen sessionId={activeSessionDto.id} />);
+
+    await user.click(await screen.findByRole("button", { name: "Adicionar item" }));
+
+    await user.type(screen.getByLabelText("Nome"), "Arroz");
+    await user.type(screen.getByLabelText("Preço unitário"), "25.9");
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(
+      await screen.findByText("Não foi possível adicionar o item. Tente novamente."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "Adicionar item" })).toBeInTheDocument();
+  });
+
+  it("does not offer Adicionar item for a completed session", async () => {
+    useDetailResponse({
+      ...detailWithRiceItem(),
+      status: "COMPLETED",
+      completedAt: "2026-08-31T18:00:00.000Z",
+    });
+
+    render(<ShoppingSessionScreen sessionId={activeSessionDto.id} />);
+
+    await screen.findByText("Arroz");
+    expect(
+      screen.queryByRole("button", { name: "Adicionar item" }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the not-found state for a 404", async () => {

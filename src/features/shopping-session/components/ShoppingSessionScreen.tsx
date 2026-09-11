@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
+import { Button } from "@/shared/components/Button/Button";
 import { ErrorMessage } from "@/shared/components/ErrorMessage/ErrorMessage";
 import { LoadingIndicator } from "@/shared/components/LoadingIndicator/LoadingIndicator";
 
 import { useShoppingSessionController } from "../hooks/useShoppingSessionController";
 import { toShoppingSessionId } from "../model/shoppingSessionSummary.types";
+import { AddItemForm } from "./AddItemForm";
 import { EmptyItemsState } from "./EmptyItemsState";
 import { SessionHeader } from "./SessionHeader";
 import { SessionSummary } from "./SessionSummary";
@@ -21,9 +24,13 @@ interface ShoppingSessionScreenProps {
 export function ShoppingSessionScreen({
   sessionId,
 }: ShoppingSessionScreenProps) {
+  const [isAddingItem, setIsAddingItem] = useState(false);
   const {
     changeItemQuantity,
+    createItem,
+    createItemErrorMessage,
     errorMessage,
+    isCreatingItem,
     isLoading,
     isNotFound,
     quantityErrorMessage,
@@ -96,6 +103,19 @@ export function ShoppingSessionScreen({
           onQuantityChange={changeItemQuantity}
         />
       )}
+
+      {session.status === "active" ? (
+        isAddingItem ? (
+          <AddItemForm
+            isSubmitting={isCreatingItem}
+            errorMessage={createItemErrorMessage}
+            onSave={createItem}
+            onClose={() => setIsAddingItem(false)}
+          />
+        ) : (
+          <Button onClick={() => setIsAddingItem(true)}>Adicionar item</Button>
+        )
+      ) : null}
     </main>
   );
 }

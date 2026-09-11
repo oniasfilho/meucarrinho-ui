@@ -9,3 +9,11 @@ export interface UpdateItemQuantityInput {
   itemId: string;
   quantity: number;
 }
+
+export interface CreateShoppingSessionItemInput {
+  sessionId: ShoppingSessionId;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+  note?: string | null | undefined;
+}

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type {
+  CreateShoppingSessionItemRequestDto,
   CreateShoppingSessionRequestDto,
   UpdateItemQuantityRequestDto,
 } from "@/contracts/shopping-session/shoppingSession.requests";
@@ -25,6 +26,16 @@ export function getShoppingSession(
   sessionId: string,
 ): Promise<ShoppingSessionDetailDto> {
   return apiFetch<ShoppingSessionDetailDto>(`/sessions/${sessionId}`);
+}
+
+export function createShoppingSessionItem(
+  sessionId: string,
+  input: CreateShoppingSessionItemRequestDto,
+): Promise<ShoppingSessionDetailDto> {
+  return apiFetch<ShoppingSessionDetailDto>(`/sessions/${sessionId}/items`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export function updateShoppingSessionItemQuantity(

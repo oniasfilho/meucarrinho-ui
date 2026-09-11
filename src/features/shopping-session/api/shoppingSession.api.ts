@@ -10,6 +10,7 @@ import {
 } from "../model/shoppingSession.mapper";
 import type {
   CreateShoppingSessionInput,
+  CreateShoppingSessionItemInput,
   UpdateItemQuantityInput,
 } from "../model/shoppingSession.types";
 import type { ShoppingSessionDetail } from "../model/shoppingSessionDetail.types";
@@ -138,6 +139,37 @@ const shoppingSessionApi = baseApi.injectEndpoints({
       },
       invalidatesTags: [{ type: "ShoppingSession", id: "LIST" }],
     }),
+    createItem: builder.mutation<
+      ShoppingSessionDetail,
+      CreateShoppingSessionItemInput
+    >({
+      query: ({ sessionId, ...body }) => ({
+        url: `/sessions/${sessionId}/items`,
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response: unknown) => {
+        const dto = ShoppingSessionDetailDtoSchema.parse(response);
+
+        return mapShoppingSessionDetailDto(dto);
+      },
+      async onQueryStarted({ sessionId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+
+          dispatch(
+            shoppingSessionApi.util.updateQueryData(
+              "getSession",
+              sessionId,
+              () => data,
+            ),
+          );
+        } catch {
+          // The form controller surfaces this mutation's own error state.
+        }
+      },
+      invalidatesTags: [{ type: "ShoppingSession", id: "LIST" }],
+    }),
   }),
 });
 
@@ -146,4 +178,5 @@ export const {
   useGetSessionQuery,
   useCreateSessionMutation,
   useUpdateItemQuantityMutation,
+  useCreateItemMutation,
 } = shoppingSessionApi;

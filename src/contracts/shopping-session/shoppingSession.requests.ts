@@ -27,6 +27,15 @@ export interface CreateShoppingSessionItemRequestDto {
   note?: string | null | undefined;
 }
 
+export const CreateShoppingSessionItemRequestDtoSchema = z
+  .object({
+    name: z.string().trim().min(1).max(160),
+    unitPrice: z.number().nonnegative(),
+    quantity: z.number().int().min(1),
+    note: z.string().trim().min(1).nullish(),
+  })
+  .strict() satisfies z.ZodType<CreateShoppingSessionItemRequestDto>;
+
 export interface UpdateShoppingSessionItemRequestDto {
   name?: string | undefined;
   unitPrice?: number | undefined;
